@@ -1,4 +1,4 @@
-module.exports = function(RED) {
+module.exports = function (RED) {
     var ui = require('../ui')(RED);
     var ChartIdList = {};
 
@@ -32,11 +32,11 @@ module.exports = function(RED) {
                 interpolate: config.interpolate,
                 nodata: config.nodata,
                 width: parseInt(config.width || group.config.width || 6),
-                height: parseInt(config.height || group.config.width/2+1 || 4),
+                height: parseInt(config.height || group.config.width / 2 + 1 || 4),
                 ymin: config.ymin,
                 ymax: config.ymax,
                 dot: config.dot || false,
-                xformat : config.xformat || "HH:mm:ss",
+                xformat: config.xformat || "HH:mm:ss",
                 cutout: parseInt(config.cutout || 0),
                 colors: config.colors,
                 useOneColor: config.useOneColor || false,
@@ -44,24 +44,28 @@ module.exports = function(RED) {
                 spanGaps: false,
                 options: {},
             },
-            convertBack: function(data) {
+            convertBack: function (data) {
                 if (node.newStyle) {
                     if (data && data[0] && data[0].hasOwnProperty("values")) {
                         return [data[0].values];
                     }
+                    //change here
+                    if (data.length == 0) {
+                        return [];
+                    }
                 }
                 else {
                     if (data && data[0]) {
-                        if (data[0] && data[0].hasOwnProperty("values") && data[0].values.hasOwnProperty("series") ) {
+                        if (data[0] && data[0].hasOwnProperty("values") && data[0].values.hasOwnProperty("series")) {
                             var o = [];
-                            for (var i=0; i<data[0].values.series.length; i++) {
+                            for (var i = 0; i < data[0].values.series.length; i++) {
                                 if (data[0].values.data[i] !== undefined) {
                                     if (node.chartType !== "line") {
-                                        o.push({ key:data[0].values.series[i], values:data[0].values.data[i][0] });
+                                        o.push({ key: data[0].values.series[i], values: data[0].values.data[i][0] });
                                     }
                                     else {
-                                        var d = data[0].values.data[i].map(function(i) { return [i.x, i.y]; });
-                                        o.push({ key:data[0].values.series[i], values:d });
+                                        var d = data[0].values.data[i].map(function (i) { return [i.x, i.y]; });
+                                        o.push({ key: data[0].values.series[i], values: d });
                                     }
                                 }
                             }
@@ -71,7 +75,7 @@ module.exports = function(RED) {
                     return data;
                 }
             },
-            convert: function(value, oldValue, msg) {
+            convert: function (value, oldValue, msg) {
                 var converted = {};
                 if (ChartIdList.hasOwnProperty(node.id) && ChartIdList[node.id] !== node.chartType) {
                     value = [];
@@ -91,7 +95,7 @@ module.exports = function(RED) {
                     if (!value[0].hasOwnProperty("key")) {
                         if (value[0].hasOwnProperty("series") && value[0].hasOwnProperty("data")) {
                             var flag = true;
-                            for (var dd = 0; dd < value[0].data.length; dd++ ) {
+                            for (var dd = 0; dd < value[0].data.length; dd++) {
                                 if (!isNaN(value[0].data[dd][0])) { flag = false; }
                             }
                             if (node.chartType === "line") {
@@ -100,7 +104,7 @@ module.exports = function(RED) {
                             else if (node.chartType === "bar" || node.chartType === "horizontalBar") {
                                 if (flag) {
                                     var tmp = [];
-                                    for (var d=0; d<value[0].data.length; d++) {
+                                    for (var d = 0; d < value[0].data.length; d++) {
                                         tmp.push([value[0].data[d]]);
                                     }
                                     value[0].data = tmp;
@@ -109,7 +113,7 @@ module.exports = function(RED) {
                                     value[0].labels = tmp2;
                                 }
                             }
-                            value = [{ key:node.id, values:(value[0] || {series:[], data:[], labels:[]}) }];
+                            value = [{ key: node.id, values: (value[0] || { series: [], data: [], labels: [] }) }];
                         }
                         else {
                             node.warn("Bad data inject");
@@ -119,26 +123,26 @@ module.exports = function(RED) {
                     // Old style
                     else {
                         if (node.chartType !== "line") {
-                            var nb = { series:[], data:[], labels:[] };
+                            var nb = { series: [], data: [], labels: [] };
                             for (var v in value) {
                                 if (value.hasOwnProperty(v)) {
-                                    nb.data.push([ value[v].values ]);
+                                    nb.data.push([value[v].values]);
                                     nb.series.push(value[v].key);
                                 }
                             }
-                            value = [{key:node.id, values:nb}];
+                            value = [{ key: node.id, values: nb }];
                         }
                         else {
                             if (value[0] && value[0].hasOwnProperty("values")) {
                                 if (Array.isArray(value[0].values)) { // Handle "old" style data array
-                                    var na = {series:[], data:[]};
-                                    for (var n=0; n<value.length; n++) {
+                                    var na = { series: [], data: [] };
+                                    for (var n = 0; n < value.length; n++) {
                                         na.series.push(value[n].key);
-                                        na.data.push(value[n].values.map(function(i) {
-                                            return {x:i[0], y:i[1]};
+                                        na.data.push(value[n].values.map(function (i) {
+                                            return { x: i[0], y: i[1] };
                                         }));
                                     }
-                                    value = [{ key:node.id, values:na }];
+                                    value = [{ key: node.id, values: na }];
                                 }
                             }
                         }
@@ -164,7 +168,7 @@ module.exports = function(RED) {
                         }
                     }
                     if ((!oldValue) || (oldValue.length === 0)) {
-                        oldValue = [{ key:node.id, values:{ series:[], data:[], labels:[] } }];
+                        oldValue = [{ key: node.id, values: { series: [], data: [], labels: [] } }];
                     }
                     //if (node.chartType === "line" || node.chartType === "pie" || node.chartType === "bar" || node.chartType === "horizontalBar" || node.chartType === "radar") {  // Line, Bar and Radar
                     var refill = false;
@@ -190,9 +194,9 @@ module.exports = function(RED) {
                         var limitOffsetSec = parseInt(config.removeOlder) * parseInt(config.removeOlderUnit);
                         var limitTime = time - limitOffsetSec * 1000;
                         if (time < limitTime) { return oldValue; } // ignore if too old for window
-                        var point = { "x":time, "y":value };
+                        var point = { "x": time, "y": value };
                         oldValue[0].values.data[s].push(point);
-                        converted.newPoint = [{ key:node.id, update:true, values:{ series:series, data:point, labels:label } }];
+                        converted.newPoint = [{ key: node.id, update: true, values: { series: series, data: point, labels: label } }];
                         var rc = 0;
                         for (var u = 0; u < oldValue[0].values.data[s].length; u++) {
                             if (oldValue[0].values.data[s][u].x >= limitTime) {
@@ -211,14 +215,14 @@ module.exports = function(RED) {
                         }
                         if (rc > 0) { converted.newPoint[0].remove = rc; }
                         var swap; // insert correctly if a timestamp was earlier.
-                        for (var t = oldValue[0].values.data[s].length-2; t>=0; t--) {
+                        for (var t = oldValue[0].values.data[s].length - 2; t >= 0; t--) {
                             if (oldValue[0].values.data[s][t].x <= time) {
                                 break;  // stop if we are in the right place
                             }
                             else {
                                 swap = oldValue[0].values.data[s][t];
-                                oldValue[0].values.data[s][t] = oldValue[0].values.data[s][t+1];
-                                oldValue[0].values.data[s][t+1] = swap;
+                                oldValue[0].values.data[s][t] = oldValue[0].values.data[s][t + 1];
+                                oldValue[0].values.data[s][t + 1] = swap;
                             }
                         }
                         if (swap) { converted.newPoint = true; } // if inserted then update whole chart
@@ -257,21 +261,21 @@ module.exports = function(RED) {
             }
         };
 
-        var chgtab = function() {
-            node.receive({payload:"R"});
+        var chgtab = function () {
+            node.receive({ payload: "R" });
         };
         ui.ev.on('changetab', chgtab);
 
         var done = ui.add(options);
 
-        var st = setTimeout(function() {
-            node.emit("input",{payload:"start"}); // trigger a redraw at start to flush out old data.
+        var st = setTimeout(function () {
+            node.emit("input", { payload: "start" }); // trigger a redraw at start to flush out old data.
             if (node.wires.length === 2) { // if it's an old version of the node honour it
-                node.send([null, {payload:"restore", for:node.id}]);
+                node.send([null, { payload: "restore", for: node.id }]);
             }
         }, 100);
 
-        node.on("close", function() {
+        node.on("close", function () {
             if (st) { clearTimeout(st); }
             ui.ev.removeListener('changetab', chgtab);
             done();
